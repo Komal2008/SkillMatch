@@ -4,16 +4,21 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
-  const apiUrl = env.NEXT_PUBLIC_API_URL || "https://skillmatch-2-1094.onrender.com";
+  const apiUrl =
+    env.API_URL ||
+    env.NEXT_PUBLIC_API_URL ||
+    env.VITE_API_URL ||
+    "http://localhost:5000";
 
   return {
     plugins: [
       react(),
       tailwindcss(),
     ],
-    envPrefix: ["VITE_", "NEXT_PUBLIC_"],
+    envPrefix: ["API_", "VITE_", "NEXT_PUBLIC_"],
     define: {
       "process.env.NEXT_PUBLIC_API_URL": JSON.stringify(apiUrl),
+      "import.meta.env.API_URL": JSON.stringify(apiUrl),
     },
     resolve: {
       alias: {

@@ -104,7 +104,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     githubUrl?: string;
     hackathonsParticipated?: number;
   }) => {
-    await API.post("/api/register", data);
+    const API = import.meta.env.API_URL;
+    await axios.post(`${API}/api/register`, data);
   };
 
   const login = async (email: string, password: string) => {
