@@ -12,8 +12,12 @@ const { Server } = require("socket.io");
 const app = express();
 const server = http.createServer(app);
 const JWT_SECRET = process.env.JWT_SECRET || "skillmatch-dev-secret";
-const MONGO_URI = process.env.MONGO_URI || process.env.MONGODB_URI;
+const MONGO_URI =
+  process.env.MONGO_URI ||
+  process.env.MONGODB_URI ||
+  process.env.DATABASE_URL;
 let isDatabaseReady = false;
+let isConnecting = false;
 
 const allowedOrigins = [
   "http://localhost:5173",
@@ -48,18 +52,25 @@ app.use(express.json({ limit: "50mb" }));
 /* ================================
    ✅ MongoDB Connection
 ================================ */
-mongoose
-  .connect(MONGO_URI || "mongodb://127.0.0.1:27017/skillmatch", {
-    serverSelectionTimeoutMS: 10000,
-  })
-  .then(() => {
+async function connectWithRetry() {
+  if (isConnecting) return;
+  isConnecting = true;
+  try {
+    await mongoose.connect(MONGO_URI || "mongodb://127.0.0.1:27017/skillmatch", {
+      serverSelectionTimeoutMS: 10000,
+    });
     isDatabaseReady = true;
     console.log("✅ MongoDB Connected");
-  })
-  .catch((err) => {
+  } catch (err) {
     isDatabaseReady = false;
     console.log("❌ MongoDB Error:", err?.message || err);
-  });
+    setTimeout(connectWithRetry, 5000);
+  } finally {
+    isConnecting = false;
+  }
+}
+
+connectWithRetry();
 
 mongoose.connection.on("connected", () => {
   isDatabaseReady = true;
@@ -67,12 +78,14 @@ mongoose.connection.on("connected", () => {
 
 mongoose.connection.on("disconnected", () => {
   isDatabaseReady = false;
+  setTimeout(connectWithRetry, 1000);
 });
 
 app.use("/api", (req, res, next) => {
   if (!isDatabaseReady) {
     return res.status(503).json({
-      error: "Database unavailable. Configure MONGO_URI or MONGODB_URI on backend.",
+      error:
+        "Database unavailable. Configure MONGO_URI / MONGODB_URI / DATABASE_URL on backend.",
     });
   }
   return next();
