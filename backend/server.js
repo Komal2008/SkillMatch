@@ -21,7 +21,7 @@ let isConnecting = false;
 
 const corsOptions = {
   origin: true,
-  credentials: true,
+  credentials: "https://skill-match-hujh.vercel.app ",
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 };
