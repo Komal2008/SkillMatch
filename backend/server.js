@@ -30,7 +30,6 @@ const corsOptions = {
    ✅ MIDDLEWARE
 ================================ */
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
 app.use(express.json({ limit: "50mb" }));
 
 /* ================================
